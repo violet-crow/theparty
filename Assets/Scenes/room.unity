@@ -4600,7 +4600,7 @@ GameObject:
   m_Component:
   - component: {fileID: 900321806}
   - component: {fileID: 900321808}
-  - component: {fileID: 900321807}
+  - component: {fileID: 900321809}
   m_Layer: 0
   m_Name: partymusictrigger
   m_TagString: Untagged
@@ -4623,19 +4623,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1139572095}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &900321807
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 900321805}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1c3b111fd0d5f84fbd967a036f1f266, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  audioSource: {fileID: 900321808}
 --- !u!82 &900321808
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4658,7 +4645,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 5
-  MaxDistance: 17.1
+  MaxDistance: 12.89
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -4733,6 +4720,29 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &900321809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 900321805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e109fc0606de0d419ca9ca740e439dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tracks:
+  - {fileID: 8300000, guid: af12e4cb17eba8242a832e58cff7edec, type: 3}
+  - {fileID: 8300000, guid: 75f3e4a10bd608a41bf8919eceebab0b, type: 3}
+  - {fileID: 8300000, guid: b86c286f1a1027c4095e77730eacd98b, type: 3}
+  - {fileID: 8300000, guid: 78c611c817b11c0418ab40be622b73ab, type: 3}
+  - {fileID: 8300000, guid: 29ae4f3df8b4c5c41b787312488bc77d, type: 3}
+  - {fileID: 8300000, guid: b5233354d14fbc148bf132f618dfae8a, type: 3}
+  - {fileID: 8300000, guid: 377e8f8e92cb3184f8d7f12bbaf33e2a, type: 3}
+  - {fileID: 8300000, guid: 071193cc1d1b9c547b01e28badecae5f, type: 3}
+  - {fileID: 8300000, guid: 2ec3d02438291b4489c99dccd1607ed1, type: 3}
+  - {fileID: 8300000, guid: 2b403c64098b3304d8877430e9da53bc, type: 3}
 --- !u!224 &904924705 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2881023057082173406, guid: 0e53fc5061985e941b0c5f3ddc93ec26, type: 3}
@@ -12408,8 +12418,8 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 19.999998
-  m_BaseOffset: 10
+  m_Height: 18.44
+  m_BaseOffset: 9.6
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
 --- !u!82 &1827440541
