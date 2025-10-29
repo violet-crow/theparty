@@ -8,6 +8,7 @@ public class BathroomGuideNPC : MonoBehaviour
     [Header("References")]
     public Transform player;
     public Transform bathroomWaypoint;
+
     [Header("Timing")]
     public float initialDelay = 180f;  // 3 minutes
 
@@ -19,10 +20,15 @@ public class BathroomGuideNPC : MonoBehaviour
 
     [Header("NPCDialogue")]
     public NPCDialogue dialogueComponent;
-    
+
+    [Header("Special Dialogue (subtitled)")]
+    public DialogueEntry approachDialogue;   // AudioClip + subtitles
+    public DialogueEntry bathroomDialogue;   // AudioClip + subtitles
+    public float defaultSubtitleDuration = 3f;
+
     [Header("Audio")]
     public AudioSource audioSource;
-    public AudioClip approachLine;
+    public AudioClip approachLine;    // fallback if approachDialogue.clip is null
     public AudioClip vomitingSfx;
     public bool loopVomiting = true;
 
@@ -74,20 +80,21 @@ public class BathroomGuideNPC : MonoBehaviour
 
     IEnumerator RunSequence()
     {
-        // 1) Wait 3 minutes from start
+        // 1) Wait 3 minutes from start (NPCDialogue remains active during this time)
         yield return new WaitForSeconds(initialDelay);
+
+        // Lock out manual interaction during scripted sequence
+        if (dialogueComponent)
+        {
+            dialogueComponent.enabled = false;
+            if (dialogueComponent.talkPrompt) dialogueComponent.talkPrompt.SetActive(false);
+        }
 
         // 2) Approach the player
         yield return ApproachPlayer();
 
-        // 3) Play approach line
-        if (audioSource && approachLine)
-        {
-            audioSource.loop = false;
-            audioSource.clip = approachLine;
-            audioSource.Play();
-            yield return new WaitWhile(() => audioSource.isPlaying);
-        }
+        // 3) Play approach line (with subtitles)
+        yield return PlaySpecialDialogue(approachDialogue, approachLine);
 
         // 4) Go to bathroom waypoint
         if (bathroomWaypoint)
@@ -105,10 +112,13 @@ public class BathroomGuideNPC : MonoBehaviour
         // Trigger main-room changes now
         if (mainRoomMood) mainRoomMood.Activate();
 
-        // 6) Play vomiting SFX (once or loop)
+        // 6) Bathroom line (with subtitles) before vomiting SFX
+        yield return PlaySpecialDialogue(bathroomDialogue, null);
+
+        // 7) Play vomiting SFX (once or loop)
         PlayVomitingSfx();
 
-        // 7) Remain there for the rest of runtime
+        // 8) Remain there for the rest of runtime
         while (true) yield return null;
     }
 
@@ -197,5 +207,34 @@ public class BathroomGuideNPC : MonoBehaviour
         dir.y = 0f;
         if (dir.sqrMagnitude > 0.0001f)
             transform.rotation = Quaternion.LookRotation(dir);
+    }
+
+    IEnumerator PlaySpecialDialogue(DialogueEntry entry, AudioClip fallbackClip)
+    {
+        AudioClip chosenClip = (entry != null && entry.clip) ? entry.clip : fallbackClip;
+        string text = (entry != null) ? entry.subtitles : string.Empty;
+
+        float duration = chosenClip ? chosenClip.length : defaultSubtitleDuration;
+
+        if (audioSource && chosenClip)
+        {
+            audioSource.loop = false;
+            audioSource.clip = chosenClip;
+            audioSource.Play();
+        }
+
+        if (!string.IsNullOrEmpty(text) && SubtitlesManager.Instance)
+        {
+            SubtitlesManager.Instance.Show(text, duration);
+        }
+
+        if (audioSource && chosenClip)
+        {
+            yield return new WaitWhile(() => audioSource.isPlaying);
+        }
+        else if (!string.IsNullOrEmpty(text))
+        {
+            yield return new WaitForSeconds(duration);
+        }
     }
 }
