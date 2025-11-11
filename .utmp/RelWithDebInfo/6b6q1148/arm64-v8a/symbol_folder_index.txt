@@ -1,0 +1,1 @@
+C:\Users\viole\Desktop\VR Art\theparty\project\theparty\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\build\intermediates\cxx\RelWithDebInfo\6b6q1148\obj\arm64-v8a

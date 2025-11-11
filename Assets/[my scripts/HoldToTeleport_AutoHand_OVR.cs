@@ -5,21 +5,24 @@ using Autohand;
 
 [RequireComponent(typeof(Grabbable))]
 [DisallowMultipleComponent]
-public class HoldToTeleport_AutoHand_OVR : MonoBehaviour
+public class HoldToTeleport_AutoHand_Meta : MonoBehaviour
 {
     [Header("Teleport")]
-    [Tooltip("Where the player's head (center eye) should end up.")]
+    [Tooltip("Where the player's head (camera) should end up. Place this transform at the desired head position and facing.")]
     public Transform teleportDestination;
-    [Tooltip("Your OVRCameraRig (auto-found if left empty).")]
-    public OVRCameraRig rig;
+    [Tooltip("Root transform to move for the player rig (e.g., OVRPlayerController or OVRCameraRig root). If left empty, it will auto-resolve from the main camera.")]
+    public Transform rigRoot;
 
     [Header("Timing")]
     [Tooltip("Seconds the object must be held continuously to trigger teleport.")]
-    public float holdDuration = 2f;
+    public float holdDuration = 1f;
 
     [Header("Behavior")]
+    [Tooltip("Rotate the player so their head forward matches the waypoint's forward (planar).")]
+    public bool alignYawToDestination = true;
+
     [Tooltip("Allow only a single teleport from this object.")]
-    public bool onlyOnce = true;
+    public bool onlyOnce = false;
 
     [Tooltip("Release the object from the hand(s) after teleport by briefly disabling colliders.")]
     public bool releaseAfterTeleport = true;
@@ -30,30 +33,24 @@ public class HoldToTeleport_AutoHand_OVR : MonoBehaviour
     [Tooltip("How long to disable colliders to force a drop.")]
     public float dropDisableDuration = 0.05f;
 
-    Grabbable grabbable;
-    readonly HashSet<Hand> holdingHands = new HashSet<Hand>();
-    Coroutine holdRoutine;
-    bool hasTeleported;
+    [Header("Debug")]
+    public bool debugLogs = false;
+
+    private Grabbable grabbable;
+    private readonly HashSet<Hand> holdingHands = new HashSet<Hand>();
+    private Coroutine holdRoutine;
+    private bool hasTeleported;
 
     void Awake()
     {
         grabbable = GetComponent<Grabbable>();
-        if (!rig) rig = FindAnyObjectByType<OVRCameraRig>();
-
-        // Subscribe to AutoHand C# events (not UnityEvents).
-        // The event delegate signature varies by version, so we provide overloads below.
-        grabbable.OnGrabEvent += OnGrabEventHandler;
-        grabbable.OnReleaseEvent += OnReleaseEventHandler;
+        if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Awake");
     }
 
-    void OnDestroy()
+    void OnValidate()
     {
-        // Unsubscribe safely
-        if (grabbable != null)
-        {
-            grabbable.OnGrabEvent -= OnGrabEventHandler;
-            grabbable.OnReleaseEvent -= OnReleaseEventHandler;
-        }
+        if (holdDuration < 0f) holdDuration = 0f;
+        if (dropDisableDuration < 0f) dropDisableDuration = 0f;
     }
 
     void OnDisable()
@@ -66,22 +63,15 @@ public class HoldToTeleport_AutoHand_OVR : MonoBehaviour
         holdingHands.Clear();
     }
 
-    // Event adapters (support common AutoHand signatures)
-
-    // Some versions: event HandGrabEvent(Hand hand)
-    void OnGrabEventHandler(Hand hand) { OnGrab(hand); }
-    void OnReleaseEventHandler(Hand hand) { OnRelease(hand); }
-
-    // Other versions: event HandGrabEvent(Hand hand, Grabbable grabbed)
-    void OnGrabEventHandler(Hand hand, Grabbable _) { OnGrab(hand); }
-    void OnReleaseEventHandler(Hand hand, Grabbable _) { OnRelease(hand); }
-
-    // Core logic
+    // Hook these in Grabbable's UnityEvents: On Grab / On Release
+    public void OnGrabFromAutoHand(Hand hand) { OnGrab(hand); }
+    public void OnReleaseFromAutoHand(Hand hand) { OnRelease(hand); }
 
     void OnGrab(Hand hand)
     {
         if (hand == null) return;
         holdingHands.Add(hand);
+        if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Grabbed by " + hand.name, this);
 
         if (onlyOnce && hasTeleported) return;
 
@@ -92,59 +82,102 @@ public class HoldToTeleport_AutoHand_OVR : MonoBehaviour
     void OnRelease(Hand hand)
     {
         if (hand != null) holdingHands.Remove(hand);
+        if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Released by " + (hand ? hand.name : "null"), this);
 
         if (holdingHands.Count == 0 && holdRoutine != null)
         {
             StopCoroutine(holdRoutine);
             holdRoutine = null;
+            if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Hold canceled", this);
         }
     }
 
     IEnumerator HoldThenTeleport()
     {
-        float t = 0f;
+        float elapsed = 0f;
 
-        while (t < holdDuration)
+        while (elapsed < holdDuration)
         {
             if (holdingHands.Count == 0)
             {
+                if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Hold interrupted", this);
                 holdRoutine = null;
                 yield break;
             }
-
-            t += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
+        if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Hold complete, teleporting", this);
         Teleport();
         holdRoutine = null;
     }
 
-    void Teleport()
+    [ContextMenu("Teleport Now (Test)")]
+    public void Teleport()
     {
         if (hasTeleported && onlyOnce) return;
 
         if (!teleportDestination)
         {
-            Debug.LogWarning("HoldToTeleport: No teleportDestination assigned.");
+            Debug.LogWarning("[HoldToTeleport_Meta] No teleportDestination assigned.", this);
             return;
         }
-        if (!rig)
+
+        Camera cam = Camera.main;
+        if (cam == null)
         {
-            Debug.LogWarning("HoldToTeleport: No OVRCameraRig found/assigned.");
+            Debug.LogWarning("[HoldToTeleport_Meta] No Main Camera found. Tag your center-eye camera as MainCamera.", this);
             return;
         }
 
-        // Align yaw to destination
-        Transform head = rig.centerEyeAnchor;
-        float headYaw = head.rotation.eulerAngles.y;
-        float destYaw = teleportDestination.eulerAngles.y;
-        float deltaYaw = Mathf.DeltaAngle(headYaw, destYaw);
-        rig.transform.Rotate(0f, deltaYaw, 0f, Space.World);
+        if (rigRoot == null)
+            rigRoot = ResolveRigRoot(cam.transform);
 
-        // Move rig so the head ends exactly at the destination
-        Vector3 deltaPos = teleportDestination.position - head.position;
-        rig.transform.position += deltaPos;
+        if (rigRoot == null)
+        {
+            Debug.LogWarning("[HoldToTeleport_Meta] Could not resolve rig root. Assign rigRoot in the inspector.", this);
+            return;
+        }
+
+        StartCoroutine(TeleportEndOfFrame(cam, rigRoot));
+    }
+
+    IEnumerator TeleportEndOfFrame(Camera cam, Transform root)
+    {
+        // Let tracking update this frame before we move
+        yield return new WaitForEndOfFrame();
+
+        Transform head = cam.transform;
+
+        // Disable CharacterController if present to avoid collision pushes
+        CharacterController cc = root.GetComponent<CharacterController>();
+        bool hadCC = cc && cc.enabled;
+        if (hadCC) cc.enabled = false;
+
+        // Compute desired yaw alignment (planar)
+        float deltaYaw = 0f;
+        if (alignYawToDestination)
+        {
+            Vector3 headF = Vector3.ProjectOnPlane(head.forward, Vector3.up).normalized;
+            Vector3 destF = Vector3.ProjectOnPlane(teleportDestination.forward, Vector3.up).normalized;
+            if (headF.sqrMagnitude > 0.0001f && destF.sqrMagnitude > 0.0001f)
+                deltaYaw = Vector3.SignedAngle(headF, destF, Vector3.up);
+        }
+
+        // Step 1: translate so the head lands exactly at the waypoint
+        Vector3 offset = teleportDestination.position - head.position;
+        root.position += offset;
+        if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Moved head to " + teleportDestination.position, this);
+
+        // Step 2: rotate around the destination to match yaw without moving the head away
+        if (alignYawToDestination && Mathf.Abs(deltaYaw) > 0.01f)
+        {
+            root.RotateAround(teleportDestination.position, Vector3.up, deltaYaw);
+            if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Rotated yaw by " + deltaYaw + " deg", this);
+        }
+
+        if (hadCC) cc.enabled = true;
 
         hasTeleported = true;
 
@@ -157,20 +190,37 @@ public class HoldToTeleport_AutoHand_OVR : MonoBehaviour
 
     IEnumerator ForceDropByColliderToggle()
     {
-        // Briefly disable colliders + grabbable to force AutoHand to release
-        var cols = GetComponents<Collider>();
-        foreach (var c in cols) c.enabled = false;
-        grabbable.enabled = false;
+        Collider[] cols = GetComponents<Collider>();
+        for (int i = 0; i < cols.Length; i++) cols[i].enabled = false;
+        if (grabbable) grabbable.enabled = false;
 
         yield return new WaitForSeconds(dropDisableDuration);
 
-        grabbable.enabled = true;
-        foreach (var c in cols) c.enabled = true;
+        if (grabbable) grabbable.enabled = true;
+        for (int i = 0; i < cols.Length; i++) cols[i].enabled = true;
 
         holdingHands.Clear();
+        if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Forced drop complete", this);
     }
 
-    // Optional: public API to reset one-time state
+    Transform ResolveRigRoot(Transform head)
+    {
+        if (rigRoot != null) return rigRoot;
+
+        // Prefer a parent that has a CharacterController (common on OVRPlayerController)
+        Transform t = head;
+        while (t != null)
+        {
+            if (t.GetComponent<CharacterController>() != null)
+                return t;
+            t = t.parent;
+        }
+
+        // Fallback to the top of the head's hierarchy
+        return head.root;
+    }
+
+    // Optional: reset for re-use if onlyOnce is true
     public void ResetTeleportState()
     {
         hasTeleported = false;
