@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class MainRoomMoodController : MonoBehaviour
 {
+    [Header("Teleport object")]
+public GameObject teleportObject; // assign in Inspector (start inactive)
+public bool enableTeleportObjectOnActivate = true;
     [Header("Lights")]
     public Light[] ceilingLights;
     public Color ceilingLightTargetColor = Color.red;
@@ -23,7 +26,7 @@ public class MainRoomMoodController : MonoBehaviour
 
     [Header("Desaturation (optional)")]
     public DesaturatorBase desaturator;     // assign one of the desaturator components below
-    public float desaturationTarget = -40f; // in “saturation” units, e.g., -40 moderately desaturated
+    public float desaturationTarget = -40f; // in ï¿½saturationï¿½ units, e.g., -40 moderately desaturated
     public float desaturationFadeDuration = 0.75f;
 
     [Header("Guest culling")]
@@ -44,6 +47,10 @@ public class MainRoomMoodController : MonoBehaviour
         if (triggerOnce && alreadyTriggered) return;
         alreadyTriggered = true;
 
+        // Enable the interactive object after bathroom trigger
+        if (enableTeleportObjectOnActivate && teleportObject)
+            teleportObject.SetActive(true);
+    
         // Lazy collection if needed
         if (guestObjects.Count == 0)
         {
