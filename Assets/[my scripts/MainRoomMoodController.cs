@@ -11,23 +11,12 @@ public bool enableTeleportObjectOnActivate = true;
 public Light[] ceilingLights;
 public Color ceilingLightTargetColor = Color.red;
 public float lightFadeDuration = 1.0f;
-[Tooltip("Optional: emissive mesh renderers for ceiling fixtures if you use emissive materials.")]
-public Renderer[] emissiveRenderers;
-public Color emissiveTargetColor = Color.red;
-public float emissiveIntensity = 1.0f; // multiplier applied to target color
-public float emissiveFadeDuration = 1.0f;
-public string emissiveColorProperty = "_EmissionColor";
 
 [Header("Audio")]
 public AudioSource musicSource;         // main music
 public AudioSource partyAmbientSource;  // current party ambience
 public AudioSource fightAmbientSource;  // alternate ambience (fighting)
 public float audioFadeDuration = 1.0f;
-
-[Header("Desaturation (optional)")]
-public DesaturatorBase desaturator;     // assign one of the desaturator components below
-public float desaturationTarget = -40f; // saturation units
-public float desaturationFadeDuration = 0.75f;
 
 [Header("Guest culling")]
 [Range(0f, 1f)]
@@ -36,7 +25,6 @@ public float guestCullPercent = 0.5f;
 public List<GameObject> guestObjects = new List<GameObject>();
 public Transform guestsRoot;            // optional: parent that holds guest NPCs
 public string guestTag;                 // optional: tag to collect guests at runtime
-public bool disableGuestsInsteadOfDestroy = true;
 
 [Header("Dialogue context")]
 public bool setDialogueToPostParty = true;
@@ -83,12 +71,8 @@ IEnumerator Run()
     var tasks = new List<Coroutine>();
 
     tasks.Add(StartCoroutine(FadeCeilingLights()));
-    tasks.Add(StartCoroutine(FadeEmissive()));
     tasks.Add(StartCoroutine(CrossfadeAudio()));
     tasks.Add(StartCoroutine(CullGuestsGradually()));
-
-    if (desaturator)
-        tasks.Add(StartCoroutine(desaturator.Apply(desaturationFadeDuration, desaturationTarget)));
 
     // Wait for all tasks to finish
     foreach (var t in tasks)
@@ -101,7 +85,6 @@ IEnumerator Run()
 
 void SetDialogueContext(bool postParty)
 {
-    // In Unity 2020.2+, you can use FindObjectsOfType<NPCDialogue>(true) to include inactive.
     var npcs = FindObjectsOfType<NPCDialogue>();
     for (int i = 0; i < npcs.Length; i++)
     {
@@ -137,54 +120,6 @@ IEnumerator FadeCeilingLights()
     {
         var l = ceilingLights[i];
         if (l) l.color = ceilingLightTargetColor;
-    }
-}
-
-IEnumerator FadeEmissive()
-{
-    if (emissiveRenderers == null || emissiveRenderers.Length == 0 || emissiveFadeDuration <= 0f)
-        yield break;
-
-    var blocks = new MaterialPropertyBlock[emissiveRenderers.Length];
-    var originalColors = new Color[emissiveRenderers.Length];
-
-    for (int i = 0; i < emissiveRenderers.Length; i++)
-    {
-        var r = emissiveRenderers[i];
-        if (!r) continue;
-        var block = new MaterialPropertyBlock();
-        r.GetPropertyBlock(block);
-        originalColors[i] = block.GetColor(emissiveColorProperty);
-        blocks[i] = block;
-
-        foreach (var mat in r.sharedMaterials)
-            if (mat) mat.EnableKeyword("_EMISSION");
-    }
-
-    var target = emissiveTargetColor * emissiveIntensity;
-    float t = 0f;
-    while (t < emissiveFadeDuration)
-    {
-        float a = t / emissiveFadeDuration;
-        for (int i = 0; i < emissiveRenderers.Length; i++)
-        {
-            var r = emissiveRenderers[i];
-            if (!r) continue;
-            var c = Color.Lerp(originalColors[i], target, a);
-            var block = blocks[i];
-            block.SetColor(emissiveColorProperty, c);
-            r.SetPropertyBlock(block);
-        }
-        t += Time.deltaTime;
-        yield return null;
-    }
-    for (int i = 0; i < emissiveRenderers.Length; i++)
-    {
-        var r = emissiveRenderers[i];
-        if (!r) continue;
-        var block = blocks[i];
-        block.SetColor(emissiveColorProperty, target);
-        r.SetPropertyBlock(block);
     }
 }
 
@@ -242,6 +177,7 @@ IEnumerator CullGuestsGradually()
     int toCull = Mathf.RoundToInt(candidates.Count * guestCullPercent);
     if (toCull <= 0) yield break;
 
+    // Shuffle
     for (int i = candidates.Count - 1; i > 0; i--)
     {
         int j = Random.Range(0, i + 1);
@@ -256,10 +192,8 @@ IEnumerator CullGuestsGradually()
         var g = candidates[i];
         if (!g) continue;
 
-        if (disableGuestsInsteadOfDestroy)
-            g.SetActive(false);
-        else
-            Destroy(g);
+        // Disable guest object (no destroying)
+        g.SetActive(false);
 
         culled++;
 
