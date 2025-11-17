@@ -1,184 +1,122 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR;
-
-[System.Serializable]
-public class DialogueEntry
-{
-public AudioClip clip;
-[TextArea] public string subtitles;
-}
 
 public class NPCDialogue : MonoBehaviour
 {
-    [Header("Setup")]
-    public AudioSource audioSource;
-    public GameObject talkPrompt; // world-space "(A) Talk" prefab
-    [Header("Legacy single-line (optional)")]
-    public AudioClip clip;
-    [TextArea] public string subtitleText;
+[Header("Lines")]
+public string[] prePartyLines;
+public string[] postPartyLines;
+[Header("Voice (optional)")]
+public AudioSource voiceSource;         // auto-fills from this GameObject if null
+public AudioClip[] prePartyClips;
+public AudioClip[] postPartyClips;
+public float voiceVolume = 1f;
 
-    [Header("Multi-line dialogue")]
-    public List<DialogueEntry> dialogues = new List<DialogueEntry>();
-    public bool randomize = false;           // pick a random line instead of cycling
-    public bool avoidImmediateRepeat = true; // try not to repeat the last line when randomizing
+[Header("Behavior")]
+public bool autoChatter = true;
+public Vector2 autoIntervalRange = new Vector2(6f, 12f);
+public bool requireListenerNearby = true;
+public Transform listener;              // auto-fills Player tag if null
+public float maxSpeakDistance = 8f;
+public bool onlyOneLine = false;        // speak only once ever
+public bool allowOverlap = false;       // allow speaking while audio is already playing
 
-    [Header("Behavior")]
-    public float showPromptDistance = 2.0f; // meters
-    public bool oneShot = false;            // optional: only talk once (after first interaction)
+[Header("Animation (optional)")]
+public Animator animator;
+public string talkTriggerName = "Talk";
 
-    [Header("Prompt/interaction gating")]
-    [Range(0f, 1f)] public float lookDotThreshold = 0.6f; // 0.6 ≈ 53°, 0.8 ≈ 36°
+Coroutine chatterRoutine;
+bool spokeOnce;
 
-    Transform playerHead;
-    bool clipPlaying;
-    int nextIndex = 0;
-    int lastPlayedIndex = -1;
-    float lastDialogueDuration = 0f;
-
-    void Start()
+void Awake()
+{
+    if (!voiceSource) voiceSource = GetComponent<AudioSource>();
+    if (!listener)
     {
-        if (!audioSource) audioSource = GetComponent<AudioSource>();
-        if (talkPrompt) talkPrompt.SetActive(false);
-        playerHead = Camera.main ? Camera.main.transform : null;
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player) listener = player.transform;
+    }
+}
+
+void OnEnable()
+{
+    if (autoChatter && chatterRoutine == null)
+        chatterRoutine = StartCoroutine(AutoChatter());
+}
+
+void OnDisable()
+{
+    if (chatterRoutine != null)
+    {
+        StopCoroutine(chatterRoutine);
+        chatterRoutine = null;
+    }
+}
+
+IEnumerator AutoChatter()
+{
+    while (enabled && gameObject.activeInHierarchy && (!onlyOneLine || !spokeOnce))
+    {
+        float wait = Random.Range(autoIntervalRange.x, autoIntervalRange.y);
+        yield return new WaitForSeconds(wait);
+
+        if (onlyOneLine && spokeOnce) break;
+
+        if (requireListenerNearby && listener)
+        {
+            float sqrDist = (listener.position - transform.position).sqrMagnitude;
+            if (sqrDist > maxSpeakDistance * maxSpeakDistance) continue;
+        }
+
+        if (!allowOverlap && voiceSource && voiceSource.isPlaying) continue;
+
+        Speak();
+        if (onlyOneLine) break;
     }
 
-    void Update()
+    chatterRoutine = null;
+}
+
+public void Speak()
+{
+    string line = GetRandomLine();
+    AudioClip clip = GetRandomClip();
+
+    if (animator && !string.IsNullOrEmpty(talkTriggerName))
+        animator.SetTrigger(talkTriggerName);
+
+    if (!string.IsNullOrEmpty(line))
+        Debug.Log($"{name}: {line}");
+
+    if (voiceSource && clip)
     {
-        // Find player head
-        if (!playerHead && Camera.main) playerHead = Camera.main.transform;
-        if (!playerHead) return;
-
-        // Proximity
-        float dist = Vector3.Distance(playerHead.position, transform.position);
-        bool inRange = dist <= showPromptDistance && !clipPlaying;
-
-        // Looking check (full 3D)
-        bool looking = false;
-        if (inRange)
-        {
-            Vector3 toNPC = (transform.position - playerHead.position).normalized;
-            float dot = Vector3.Dot(playerHead.forward, toNPC);
-            looking = dot >= lookDotThreshold;
-        }
-
-        bool canPromptAndInteract = inRange && looking;
-
-        if (talkPrompt) talkPrompt.SetActive(canPromptAndInteract);
-
-        if (canPromptAndInteract && GetRightAButtonDown())
-            PlayDialogue();
+        voiceSource.volume = voiceVolume;
+        voiceSource.clip = clip;
+        voiceSource.Play();
     }
 
-    bool GetRightAButtonDown()
-    {
-        // Oculus A button (right controller)
-        return OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.RTouch);
-    }
+    spokeOnce = true;
+}
 
-    void PlayDialogue()
-    {
-        DialogueEntry entry = SelectDialogueEntry();
+public void Interact()
+{
+    if (!onlyOneLine || !spokeOnce)
+        Speak();
+}
 
-        // If no entries and no legacy clip, do nothing
-        if (entry == null && clip == null && string.IsNullOrEmpty(subtitleText))
-            return;
+string GetRandomLine()
+{
+    var phase = MainRoomMoodController.CurrentPhase;
+    var list = phase == PartyPhase.Post ? postPartyLines : prePartyLines;
+    if (list == null || list.Length == 0) return string.Empty;
+    return list[Random.Range(0, list.Length)];
+}
 
-        clipPlaying = true;
-        if (talkPrompt) talkPrompt.SetActive(false);
-
-        // Determine audio and duration
-        AudioClip chosenClip = entry != null ? entry.clip : clip;
-        string chosenSub = entry != null ? entry.subtitles : subtitleText;
-
-        if (chosenClip && audioSource)
-        {
-            audioSource.clip = chosenClip;
-            audioSource.Play();
-        }
-
-        lastDialogueDuration = chosenClip ? chosenClip.length : 3f;
-
-        if (!string.IsNullOrEmpty(chosenSub) && SubtitlesManager.Instance)
-        {
-            SubtitlesManager.Instance.Show(chosenSub, lastDialogueDuration);
-        }
-
-        // Advance index for next time (if using multi-line and not random)
-        if (entry != null && !randomize)
-        {
-            nextIndex = (nextIndex + 1) % dialogues.Count;
-            lastPlayedIndex = nextIndex == 0 ? dialogues.Count - 1 : nextIndex - 1;
-        }
-        else if (entry != null && randomize)
-        {
-            // Track last played so we can avoid repeating when randomizing
-            lastPlayedIndex = GetIndexOfEntry(entry);
-        }
-
-        StartCoroutine(WaitForDialogueEnd());
-    }
-
-    DialogueEntry SelectDialogueEntry()
-    {
-        if (dialogues == null || dialogues.Count == 0)
-            return null;
-
-        if (!randomize)
-        {
-            return dialogues[nextIndex];
-        }
-
-        // Random selection
-        if (dialogues.Count == 1)
-            return dialogues[0];
-
-        int idx = Random.Range(0, dialogues.Count);
-
-        if (avoidImmediateRepeat && lastPlayedIndex >= 0)
-        {
-            // Try up to a few times to avoid picking the same index
-            const int attempts = 5;
-            int tries = 0;
-            while (idx == lastPlayedIndex && tries < attempts)
-            {
-                idx = Random.Range(0, dialogues.Count);
-                tries++;
-            }
-        }
-
-        return dialogues[idx];
-    }
-
-    int GetIndexOfEntry(DialogueEntry entry)
-    {
-        if (dialogues == null) return -1;
-        for (int i = 0; i < dialogues.Count; i++)
-            if (dialogues[i] == entry) return i;
-        return -1;
-    }
-
-    IEnumerator WaitForDialogueEnd()
-    {
-        // If there is audio, wait for it to finish; otherwise wait for the subtitle duration
-        if (audioSource && audioSource.clip && audioSource.isPlaying)
-        {
-            while (audioSource.isPlaying)
-                yield return null;
-        }
-        else
-        {
-            yield return new WaitForSeconds(lastDialogueDuration);
-        }
-
-        clipPlaying = false;
-
-        if (oneShot)
-        {
-            // Optional: disable interaction after first play
-            enabled = false;
-            if (talkPrompt) talkPrompt.SetActive(false);
-        }
-    }
+AudioClip GetRandomClip()
+{
+    var phase = MainRoomMoodController.CurrentPhase;
+    var list = phase == PartyPhase.Post ? postPartyClips : prePartyClips;
+    if (list == null || list.Length == 0) return null;
+    return list[Random.Range(0, list.Length)];
+}
 }
