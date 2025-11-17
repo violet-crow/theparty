@@ -7221,127 +7221,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3560317803409017246, guid: d493d80813479394da472625132622ed, type: 3}
   m_PrefabInstance: {fileID: 676855125}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &677049765
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 677049766}
-  - component: {fileID: 677049768}
-  - component: {fileID: 677049767}
-  m_Layer: 0
-  m_Name: lamp light
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &677049766
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 677049765}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.089691736, y: -0.6439936, z: 0.38260946, w: 0.6563823}
-  m_LocalPosition: {x: -0.2869, y: 0.5438, z: -0.002}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1879436250}
-  m_LocalEulerAnglesHint: {x: 37.629, y: -78.754, z: 29.231}
---- !u!114 &677049767
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 677049765}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Version: 3
-  m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
-  m_LightLayerMask: 1
-  m_RenderingLayers: 1
-  m_CustomShadowLayers: 0
-  m_ShadowLayerMask: 1
-  m_ShadowRenderingLayers: 1
-  m_LightCookieSize: {x: 1, y: 1}
-  m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
---- !u!108 &677049768
-Light:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 677049765}
-  m_Enabled: 1
-  serializedVersion: 11
-  m_Type: 2
-  m_Color: {r: 0.9529412, g: 0.8117647, b: 0.3764706, a: 1}
-  m_Intensity: 0.15
-  m_Range: 0.15
-  m_SpotAngle: 43.316128
-  m_InnerSpotAngle: 24.633026
-  m_CookieSize: 10
-  m_Shadows:
-    m_Type: 0
-    m_Resolution: -1
-    m_CustomResolution: -1
-    m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
-    m_NearPlane: 0.2
-    m_CullingMatrixOverride:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
-    m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
-  m_DrawHalo: 0
-  m_Flare: {fileID: 0}
-  m_RenderMode: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingLayerMask: 1
-  m_Lightmapping: 4
-  m_LightShadowCasterMode: 0
-  m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_UseBoundingSphereOverride: 0
-  m_UseViewFrustumForShadowCasterCull: 1
-  m_ForceVisible: 0
-  m_ShadowRadius: 0
-  m_ShadowAngle: 0
-  m_LightUnit: 1
-  m_LuxAtDistance: 1
-  m_EnableSpotReflector: 1
 --- !u!108 &682950718 stripped
 Light:
   m_CorrespondingSourceObject: {fileID: 8930985665265829413, guid: 2a94eb5225b6b7341b22b91791ee056f, type: 3}
@@ -8318,7 +8197,7 @@ Transform:
   m_GameObject: {fileID: 813203958}
   serializedVersion: 2
   m_LocalRotation: {x: 0.089691736, y: -0.6439936, z: 0.38260946, w: 0.6563823}
-  m_LocalPosition: {x: -0.2268, y: 0.591, z: -0.0139}
+  m_LocalPosition: {x: -0.22450112, y: 0.5839, z: -0.030700564}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8357,7 +8236,7 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 0
-  m_Color: {r: 0.9528302, g: 0.8098396, b: 0.373042, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 5
   m_Range: 2.413049
   m_SpotAngle: 43.316128
@@ -9066,7 +8945,6 @@ Transform:
   - {fileID: 400687102}
   - {fileID: 1940875980}
   - {fileID: 1743686185}
-  - {fileID: 1209588837}
   m_Father: {fileID: 2145616276}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1003144030 stripped
@@ -9999,7 +9877,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1361764291}
-  m_Father: {fileID: 983800804}
+  m_Father: {fileID: 1657320635}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1232560452
 GameObject:
@@ -15831,7 +15709,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 10.943
+      value: 10.287604
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalPosition.y
@@ -15839,11 +15717,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -5.423
+      value: -5.59
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9151905
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalRotation.x
@@ -15851,7 +15729,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.40302143
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalRotation.z
@@ -15863,7 +15741,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 47.534
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1357301948844457617, guid: 6e1221fba226647409d003d99e2d7dd2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -15939,6 +15817,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1402645224}
+  - {fileID: 1209588837}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!224 &1664280607 stripped
@@ -16052,14 +15931,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 616920895}
     m_Modifications:
-    - target: {fileID: 785540910181443757, guid: 2a94eb5225b6b7341b22b91791ee056f, type: 3}
-      propertyPath: m_Range
-      value: 1.11
-      objectReference: {fileID: 0}
-    - target: {fileID: 785540910181443757, guid: 2a94eb5225b6b7341b22b91791ee056f, type: 3}
-      propertyPath: m_Intensity
-      value: 1.53
-      objectReference: {fileID: 0}
     - target: {fileID: 4567378974372258219, guid: 2a94eb5225b6b7341b22b91791ee056f, type: 3}
       propertyPath: m_LocalScale.x
       value: 4.89
@@ -16503,15 +16374,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8409239985f02434fafe0f5cdaa8c3e1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 10.2334
+      value: 10.238001
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8409239985f02434fafe0f5cdaa8c3e1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.6642
+      value: 1.654999
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8409239985f02434fafe0f5cdaa8c3e1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -5.9445
+      value: -5.9469986
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8409239985f02434fafe0f5cdaa8c3e1, type: 3}
       propertyPath: m_LocalRotation.w
@@ -16669,7 +16540,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   creditsScreenPrefab: {fileID: 1865159089}
   distanceFromHead: 0.3
-  fadeDuration: 3.5
+  fadeDuration: 1.5
   useUnscaledTime: 1
   oneShot: 1
   destroyObjectAfter: 0
@@ -17342,7 +17213,7 @@ MonoBehaviour:
   mainRoomMood: {fileID: 1402645225}
   player: {fileID: 716861909}
   bathroomWaypoint: {fileID: 237333504}
-  initialDelay: 1
+  initialDelay: 60
   speed: 1.2
   approachDistance: 3
   repathInterval: 0.25
@@ -17657,9 +17528,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 30f32fc55c903dd4497912b037e2b678, type: 3}
       insertIndex: -1
       addedObject: {fileID: 813203959}
-    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 30f32fc55c903dd4497912b037e2b678, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 677049766}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 30f32fc55c903dd4497912b037e2b678, type: 3}
       insertIndex: -1
@@ -19398,10 +19266,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: 1adc73b21707dcd4294390c36798fc3a, type: 3}
     - target: {fileID: 680093787528510592, guid: 0e53fc5061985e941b0c5f3ddc93ec26, type: 3}
-      propertyPath: dialogues.Array.data[2].clip
-      value: 
-      objectReference: {fileID: 8300000, guid: 1adc73b21707dcd4294390c36798fc3a, type: 3}
-    - target: {fileID: 680093787528510592, guid: 0e53fc5061985e941b0c5f3ddc93ec26, type: 3}
       propertyPath: dialogues.Array.data[0].subtitles
       value: "During one of the songs I heard a C5 where it should\u2019ve been an
         E5, which is okay because like, it was technically still in the chord, but
@@ -19409,19 +19273,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 680093787528510592, guid: 0e53fc5061985e941b0c5f3ddc93ec26, type: 3}
       propertyPath: dialogues.Array.data[1].subtitles
-      value: Yeah. So basically, like I've played two Mario Kart games competitively
-        and like the first one was Mario Kart eight deluxe. And in that game, like
-        Nintendo decided to be stupid and make it so that, like, you can get hit
-        by items people are trailing even when you don't hit them on your screen.
-        So there's a lot of times where you just spin out and get last for no reason.
-        So that was not good. Anyway, in the new game, they made it so that the like,
-        even though the items automatically trail like you, you have to actually
-        run into them on your screen to get hit by them. So it's a lot better in
-        that way. Uh, the new game has a lot of other kind of problems that I won't
-        get into right now, but but that's that. That was definitely a nice change.
-      objectReference: {fileID: 0}
-    - target: {fileID: 680093787528510592, guid: 0e53fc5061985e941b0c5f3ddc93ec26, type: 3}
-      propertyPath: dialogues.Array.data[2].subtitles
       value: Yeah. So basically, like I've played two Mario Kart games competitively
         and like the first one was Mario Kart eight deluxe. And in that game, like
         Nintendo decided to be stupid and make it so that, like, you can get hit
