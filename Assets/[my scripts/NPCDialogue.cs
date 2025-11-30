@@ -1,108 +1,113 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR;
 
 [System.Serializable]
 public class DialogueEntry
 {
 public AudioClip clip;
 [TextArea] public string subtitles;
-public bool isPostParty; // Check this to mark the entry as post-party only
+public bool isPostParty; // true = post-party; false = pre-party
 }
 
 public class NPCDialogue : MonoBehaviour
 {
 [Header("Setup")]
 public AudioSource audioSource;
-public GameObject talkPrompt; // world-space "(X/Y) Talk" prefab
+public GameObject talkPrompt;
 [Header("Legacy single-line (optional)")]
 public AudioClip clip;
 [TextArea] public string subtitleText;
 
 [Header("Multi-line dialogue")]
 public List<DialogueEntry> dialogues = new List<DialogueEntry>();
-public bool randomize = false;           // pick a random line instead of cycling
-public bool avoidImmediateRepeat = true; // try not to repeat the last line when randomizing
+public bool randomize = false;
+public bool avoidImmediateRepeat = true;
 
 [Header("Behavior")]
-public float showPromptDistance = 2.0f; // meters
-public bool oneShot = false;            // optional: only talk once (after first interaction)
+public float showPromptDistance = 2.0f;
+public bool oneShot = false;
 
 [Header("Prompt/interaction gating")]
-[Range(0f, 1f)] public float lookDotThreshold = 0.6f; // 0.6 ≈ 53°, 0.8 ≈ 36°
+[Range(0f, 1f)] public float lookDotThreshold = 0.6f;
 
 [Header("Dialogue phase")]
-public bool isPostPartyContext = false; // Set true after the party to use post-party lines
+public bool isPostPartyContext = false;
 
-Transform playerHead;
+// Internal state
 bool clipPlaying;
-
-// Cycling indices maintained per phase (pre/post party)
 int nextIndexPre = 0;
 int nextIndexPost = 0;
-
-// Track the last entry played to avoid immediate repeats in random mode
 DialogueEntry lastPlayedEntry = null;
-
-// Buffer for eligible entries per current phase
 readonly List<DialogueEntry> eligibleBuffer = new List<DialogueEntry>();
 int lastEligibleCount = 0;
-
 float lastDialogueDuration = 0f;
 
 void Start()
 {
     if (!audioSource) audioSource = GetComponent<AudioSource>();
     if (talkPrompt) talkPrompt.SetActive(false);
-    playerHead = Camera.main ? Camera.main.transform : null;
 }
 
-void Update()
+void OnEnable()
 {
-    // Find player head
-    if (!playerHead && Camera.main) playerHead = Camera.main.transform;
-    if (!playerHead) return;
-
-    // Proximity
-    float dist = Vector3.Distance(playerHead.position, transform.position);
-    bool inRange = dist <= showPromptDistance && !clipPlaying;
-
-    // Looking check (full 3D)
-    bool looking = false;
-    if (inRange)
-    {
-        Vector3 toNPC = (transform.position - playerHead.position).normalized;
-        float dot = Vector3.Dot(playerHead.forward, toNPC);
-        looking = dot >= lookDotThreshold;
-    }
-
-    // Only prompt if there is something eligible to say right now
-    bool hasContent = HasEligibleContentForCurrentPhase();
-    bool canPromptAndInteract = inRange && looking && hasContent;
-
-    if (talkPrompt) talkPrompt.SetActive(canPromptAndInteract);
-
-    if (canPromptAndInteract && GetLeftXYButtonDown())
-        PlayDialogue();
+    if (DialogueFocusManager.Instance)
+        DialogueFocusManager.Instance.Register(this);
 }
 
-bool GetLeftXYButtonDown()
+void OnDisable()
 {
-    // either left-controller button
-    return OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.LTouch) || OVRInput.GetDown(OVRInput.Button.Two, OVRInput.Controller.LTouch);
+    if (DialogueFocusManager.Instance)
+        DialogueFocusManager.Instance.Unregister(this);
 }
+
+// Manager calls this to decide if the NPC is a candidate and to rank it
+public bool ComputeEligibility(Transform head, out float dot, out float dist)
+{
+    dot = -1f;
+    dist = float.MaxValue;
+
+    if (head == null || clipPlaying)
+        return false;
+
+    dist = Vector3.Distance(head.position, transform.position);
+    if (dist > showPromptDistance)
+        return false;
+
+    Vector3 toNPC = (transform.position - head.position).normalized;
+    dot = Vector3.Dot(head.forward, toNPC);
+
+    if (dot < lookDotThreshold)
+        return false;
+
+    return HasEligibleContentForCurrentPhase();
+}
+
+// Manager controls prompt visibility/highlight
+public void SetPromptActive(bool active)
+{
+    if (talkPrompt) talkPrompt.SetActive(active && !clipPlaying);
+    // Optional: add visual highlight state changes here
+}
+
+// Manager triggers dialogue on the focused NPC
+public void TriggerDialogue()
+{
+    PlayDialogue();
+}
+
+public bool IsTalking => clipPlaying;
 
 void PlayDialogue()
 {
     DialogueEntry entry = SelectDialogueEntry();
 
-    // If no eligible entries and no legacy clip/text, do nothing
+    // If nothing eligible and no legacy clip/text, do nothing
     if (entry == null && clip == null && string.IsNullOrEmpty(subtitleText))
         return;
 
     clipPlaying = true;
-    if (talkPrompt) talkPrompt.SetActive(false);
+    SetPromptActive(false);
 
     // Determine audio and duration
     AudioClip chosenClip = entry != null ? entry.clip : clip;
@@ -132,7 +137,6 @@ void PlayDialogue()
                 nextIndexPre = lastEligibleCount > 0 ? (nextIndexPre + 1) % lastEligibleCount : 0;
         }
 
-        // Track last played for repeat avoidance
         lastPlayedEntry = entry;
     }
 
@@ -154,14 +158,13 @@ DialogueEntry SelectDialogueEntry()
     }
 
     lastEligibleCount = eligibleBuffer.Count;
-    int idx;
     if (lastEligibleCount == 0)
         return null;
 
+    // Sequential selection
     if (!randomize)
     {
-        idx = isPostPartyContext ? nextIndexPost : nextIndexPre;
-        // Clamp in case the count changed since last time
+        int idx = isPostPartyContext ? nextIndexPost : nextIndexPre;
         if (idx < 0 || idx >= lastEligibleCount) idx = 0;
         return eligibleBuffer[idx];
     }
@@ -170,25 +173,20 @@ DialogueEntry SelectDialogueEntry()
     if (lastEligibleCount == 1)
         return eligibleBuffer[0];
 
-    idx = Random.Range(0, lastEligibleCount);
+    int chosen = Random.Range(0, lastEligibleCount);
 
     if (avoidImmediateRepeat && lastPlayedEntry != null)
     {
         const int attempts = 5;
-        int tries = 0;
-        while (eligibleBuffer[idx] == lastPlayedEntry && tries < attempts)
-        {
-            idx = Random.Range(0, lastEligibleCount);
-            tries++;
-        }
+        for (int tries = 0; tries < attempts && eligibleBuffer[chosen] == lastPlayedEntry; tries++)
+            chosen = Random.Range(0, lastEligibleCount);
     }
 
-    return eligibleBuffer[idx];
+    return eligibleBuffer[chosen];
 }
 
 bool HasEligibleContentForCurrentPhase()
 {
-    // If any eligible dialogue exists for the current phase, we can prompt
     if (dialogues != null && dialogues.Count > 0)
     {
         for (int i = 0; i < dialogues.Count; i++)
@@ -199,7 +197,6 @@ bool HasEligibleContentForCurrentPhase()
         }
     }
 
-    // Otherwise, allow legacy single-line if present
     if (clip != null) return true;
     if (!string.IsNullOrEmpty(subtitleText)) return true;
 
@@ -208,7 +205,6 @@ bool HasEligibleContentForCurrentPhase()
 
 IEnumerator WaitForDialogueEnd()
 {
-    // If there is audio, wait for it to finish; otherwise wait for the subtitle duration
     if (audioSource && audioSource.clip && audioSource.isPlaying)
     {
         while (audioSource.isPlaying)
@@ -223,9 +219,8 @@ IEnumerator WaitForDialogueEnd()
 
     if (oneShot)
     {
-        // Optional: disable interaction after first play
         enabled = false;
-        if (talkPrompt) talkPrompt.SetActive(false);
+        SetPromptActive(false);
     }
 }
 }
