@@ -5,7 +5,7 @@ using Autohand;
 
 [RequireComponent(typeof(Grabbable))]
 [DisallowMultipleComponent]
-public class HoldToTeleport_AutoHand_Meta : MonoBehaviour
+public class HoldToTeleport : MonoBehaviour
 {
     [Header("Teleport")]
     [Tooltip("Where the player's head (camera) should end up. Place this transform at the desired head position and facing.")]

@@ -15,7 +15,7 @@ public class NPCDialogue : MonoBehaviour
 {
 [Header("Setup")]
 public AudioSource audioSource;
-public GameObject talkPrompt; // world-space "(A) Talk" prefab
+public GameObject talkPrompt; // world-space "(X/Y) Talk" prefab
 [Header("Legacy single-line (optional)")]
 public AudioClip clip;
 [TextArea] public string subtitleText;
@@ -83,14 +83,14 @@ void Update()
 
     if (talkPrompt) talkPrompt.SetActive(canPromptAndInteract);
 
-    if (canPromptAndInteract && GetRightAButtonDown())
+    if (canPromptAndInteract && GetLeftXYButtonDown())
         PlayDialogue();
 }
 
-bool GetRightAButtonDown()
+bool GetLeftXYButtonDown()
 {
-    // Oculus A button (right controller)
-    return OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.RTouch);
+    // either left-controller button
+    return OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.LTouch) || OVRInput.GetDown(OVRInput.Button.Two, OVRInput.Controller.LTouch);
 }
 
 void PlayDialogue()
