@@ -80,7 +80,7 @@ public class BathroomGuideNPC : MonoBehaviour
 
     IEnumerator RunSequence()
     {
-        // 1) Wait 3 minutes from start (NPCDialogue remains active during this time)
+        // 1) Wait time from start
         yield return new WaitForSeconds(initialDelay);
 
         // Lock out manual interaction during scripted sequence
@@ -95,6 +95,7 @@ public class BathroomGuideNPC : MonoBehaviour
 
         // 3) Play approach line (with subtitles)
         yield return PlaySpecialDialogue(approachDialogue, approachLine);
+        DisablePromptForever();
 
         // 4) Go to bathroom waypoint
         if (bathroomWaypoint)
@@ -208,6 +209,22 @@ public class BathroomGuideNPC : MonoBehaviour
         if (dir.sqrMagnitude > 0.0001f)
             transform.rotation = Quaternion.LookRotation(dir);
     }
+
+    void DisablePromptForever()
+{
+// If using the focus manager, unregister so it can’t toggle prompts on this NPC
+if (dialogueComponent)
+{
+DialogueFocusManager.Instance?.Unregister(dialogueComponent);
+dialogueComponent.enabled = false;
+if (dialogueComponent.talkPrompt)
+        dialogueComponent.talkPrompt.SetActive(false);
+}
+
+// If you also have a separate child canvas named BtnPrmptCanvas, disable it too
+var p = transform.Find("BtnPrmptCanvas");
+if (p) p.gameObject.SetActive(false);
+}
 
     IEnumerator PlaySpecialDialogue(DialogueEntry entry, AudioClip fallbackClip)
     {

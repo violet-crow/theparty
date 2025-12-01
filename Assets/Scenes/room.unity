@@ -129,9 +129,8 @@ GameObject:
   m_Component:
   - component: {fileID: 19974070}
   - component: {fileID: 19974072}
-  - component: {fileID: 19974071}
   m_Layer: 0
-  m_Name: fightambiencetrigger
+  m_Name: eerieambiencetrigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -152,19 +151,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1139572095}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &19974071
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 19974069}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1c3b111fd0d5f84fbd967a036f1f266, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  audioSource: {fileID: 19974072}
 --- !u!82 &19974072
 AudioSource:
   m_ObjectHideFlags: 0
@@ -177,7 +163,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 4424841253087566025, guid: 7849252685aa0174ebff3bca02702502, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 10c5e1e8f29ccc541b8bd3b22fc9e2ce, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 1
@@ -3208,7 +3194,7 @@ PrefabInstance:
       value: So. So imagine a horse rotating about the rotisserie axis. Now let me
         be very clear. The axis, like if you drew like a line from its nose to its
         tail, right that axis. Now this is very important. Repeat after me. Power
-        up, horsey one. Okay. What happens to the horse?d
+        up, horsey one. Okay. What happens to the horse?
       objectReference: {fileID: 0}
     - target: {fileID: 680093787528510592, guid: 0e53fc5061985e941b0c5f3ddc93ec26, type: 3}
       propertyPath: dialogues.Array.data[1].isPostParty
@@ -7098,7 +7084,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 4424841253087566025, guid: 7849252685aa0174ebff3bca02702502, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 5d5a528df3414b14ebb6fac6d9454289, type: 3}
+  m_Resource: {fileID: 8300000, guid: 722bc66db5049c04994d11054492aed5, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -9238,7 +9224,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8409239985f02434fafe0f5cdaa8c3e1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1274758192}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8409239985f02434fafe0f5cdaa8c3e1, type: 3}
       insertIndex: -1
@@ -10721,6 +10710,167 @@ Transform:
   m_Children: []
   m_Father: {fileID: 598828469}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1274758191
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1274758192}
+  - component: {fileID: 1274758194}
+  - component: {fileID: 1274758193}
+  m_Layer: 0
+  m_Name: MouthTip
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1274758192
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274758191}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1628617352}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1274758193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274758191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0729a36c66146e040b2802e2e028edc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  head: {fileID: 740607262}
+  mouthTip: {fileID: 1274758192}
+  audioSource: {fileID: 1274758194}
+  drinkClip: {fileID: 8300000, guid: fb49a3f791a0e184091eb42f0d1d3bf8, type: 3}
+  drinkVolume: 1
+  mouthForwardOffset: 0.08
+  mouthDownOffset: 0.06
+  proximityThreshold: 0.03
+  aimDotThreshold: 0.7
+  pourUpDotThreshold: -0.6
+  dwellSeconds: 1
+  cooldownSeconds: 5
+  requireLowAngularVelocity: 1
+  maxAngularVelocity: 2
+  useOVRControllerVelocity: 1
+  OnDrink:
+    m_PersistentCalls:
+      m_Calls: []
+  debugDraw: 0
+--- !u!82 &1274758194
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1274758191}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 5857453820948150252, guid: 7849252685aa0174ebff3bca02702502, type: 2}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 1
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1001 &1280581857
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17692,7 +17842,7 @@ GameObject:
   - component: {fileID: 1827440543}
   m_Layer: 0
   m_Name: specialNPC (Violet)
-  m_TagString: Untagged
+  m_TagString: NPC
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -17830,7 +17980,7 @@ MonoBehaviour:
   mainRoomMood: {fileID: 1402645225}
   player: {fileID: 716861909}
   bathroomWaypoint: {fileID: 237333504}
-  initialDelay: 1
+  initialDelay: 10
   speed: 1.2
   approachDistance: 4
   repathInterval: 0.25
@@ -17847,8 +17997,8 @@ MonoBehaviour:
       Fuck...'
     isPostParty: 0
   defaultSubtitleDuration: 3
-  audioSource: {fileID: 0}
-  approachLine: {fileID: 0}
+  audioSource: {fileID: 2000314552}
+  approachLine: {fileID: 8300000, guid: 984f6eed7800ce642b36c2492f4c6051, type: 3}
   vomitingSfx: {fileID: 8300000, guid: 47920fd260364c1419b57943e348e1ab, type: 3}
   loopVomiting: 0
   spriteRenderer: {fileID: 1827440538}

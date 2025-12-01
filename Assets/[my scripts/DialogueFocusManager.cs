@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[DefaultExecutionOrder(-1000)]
 public class DialogueFocusManager : MonoBehaviour
 {
 public static DialogueFocusManager Instance { get; private set; }
 [Header("Head source")]
-public Transform head; // Optional: assign OVRCameraRig CenterEyeAnchor; if null, uses Camera.main
+public Transform head; // Assign CenterEyeAnchor; if null, uses Camera.main
 
 [Header("Focus scoring")]
 [Range(0f, 1f)] public float dotWeight = 0.8f;
@@ -14,7 +15,7 @@ public bool lockFocusWhileTalking = true;
 
 [Header("Occlusion")]
 public bool requireLineOfSight = true;
-public LayerMask occlusionMask; // Set to environment layers that should block line of sight
+public LayerMask occlusionMask; // Include environment; exclude NPC/UI layers
 
 [Header("Input")]
 public bool useLeftXY = true;   // X/Y on left Touch
@@ -28,9 +29,27 @@ void Awake()
 {
     if (Instance != null && Instance != this) { Destroy(gameObject); return; }
     Instance = this;
-    // Optionally: DontDestroyOnLoad(gameObject);
+    BootstrapScan();
 }
 
+void OnEnable()
+{
+    if (Instance == this) BootstrapScan();
+}
+
+void BootstrapScan()
+{
+    #if UNITY_2023_1_OR_NEWER
+var found = FindObjectsByType<NPCDialogue>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+#else
+var found = FindObjectsOfType<NPCDialogue>();
+#endif
+for (int i = 0; i < found.Length; i++)
+{
+if (found[i] != null && !npcs.Contains(found[i]))
+npcs.Add(found[i]);
+}
+}
 public void Register(NPCDialogue npc)
 {
     if (npc == null) return;
@@ -95,10 +114,14 @@ void Update()
             if (len > 0f)
             {
                 dir /= len;
-                if (Physics.Raycast(head.position, dir, len, occlusionMask, QueryTriggerInteraction.Ignore))
+                if (Physics.Raycast(head.position, dir, out RaycastHit hit, len, occlusionMask, QueryTriggerInteraction.Ignore))
                 {
-                    npc.SetPromptActive(false);
-                    continue;
+                    // Ignore the target NPC’s own colliders
+                    if (!hit.transform.IsChildOf(npc.transform))
+                    {
+                        npc.SetPromptActive(false);
+                        continue;
+                    }
                 }
             }
         }
