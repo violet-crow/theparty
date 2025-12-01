@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using Autohand;
 
 [RequireComponent(typeof(Grabbable))]
@@ -48,6 +49,16 @@ public bool startCalmIfNotPlaying = true;
 public string eerieAmbianceObjectName = "eerieambiance";
 public string calmAmbianceObjectName = "calmambiance";
 
+[Header("Mixer")]
+[Tooltip("AudioMixer containing the snapshot you want to switch to on teleport.")]
+public AudioMixer mixer;
+[Tooltip("Snapshot to switch to on teleport. If left null, the script will try to find it by name in the mixer.")]
+public AudioMixerSnapshot partyAfterSnapshot;
+[Tooltip("Name of the snapshot to find on the mixer if no snapshot asset is assigned.")]
+public string partyAfterSnapshotName = "PartyAfter";
+[Tooltip("Seconds to transition to the mixer snapshot.")]
+public float snapshotTransitionTime = 0.5f;
+
 [Header("Debug")]
 public bool debugLogs = false;
 
@@ -60,6 +71,7 @@ void Awake()
 {
     grabbable = GetComponent<Grabbable>();
     ResolveAudioSourcesIfNeeded();
+    ResolveMixerSnapshotIfNeeded();
     if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Awake");
 }
 
@@ -68,6 +80,7 @@ void OnValidate()
     if (holdDuration < 0f) holdDuration = 0f;
     if (dropDisableDuration < 0f) dropDisableDuration = 0f;
     if (audioCrossfadeDuration < 0f) audioCrossfadeDuration = 0f;
+    if (snapshotTransitionTime < 0f) snapshotTransitionTime = 0f;
 }
 
 void OnDisable()
@@ -198,6 +211,9 @@ IEnumerator TeleportEndOfFrame(Camera cam, Transform root)
 
     hasTeleported = true;
 
+    // Switch mixer snapshot
+    ChangeMixerSnapshot();
+
     // Audio crossfade after teleport
     StartCoroutine(CrossfadeAmbience());
 
@@ -261,6 +277,35 @@ void ResolveAudioSourcesIfNeeded()
     }
 }
 
+void ResolveMixerSnapshotIfNeeded()
+{
+    if (partyAfterSnapshot == null && mixer != null && !string.IsNullOrEmpty(partyAfterSnapshotName))
+    {
+        var snap = mixer.FindSnapshot(partyAfterSnapshotName);
+        if (snap != null) partyAfterSnapshot = snap;
+    }
+}
+
+void ChangeMixerSnapshot()
+{
+    AudioMixerSnapshot snap = partyAfterSnapshot;
+
+    if (snap == null && mixer != null && !string.IsNullOrEmpty(partyAfterSnapshotName))
+    {
+        snap = mixer.FindSnapshot(partyAfterSnapshotName);
+    }
+
+    if (snap != null)
+    {
+        snap.TransitionTo(snapshotTransitionTime);
+        if (debugLogs) Debug.Log("[HoldToTeleport_Meta] Transitioned to mixer snapshot '" + snap.name + "' in " + snapshotTransitionTime + "s", this);
+    }
+    else if (debugLogs)
+    {
+        Debug.LogWarning("[HoldToTeleport_Meta] Mixer snapshot not found. Assign 'partyAfterSnapshot' or set 'mixer' and 'partyAfterSnapshotName'.", this);
+    }
+}
+
 IEnumerator CrossfadeAmbience()
 {
     // Nothing to do if both sources are missing
@@ -276,7 +321,6 @@ IEnumerator CrossfadeAmbience()
     float startEerie = eerieAmbiance != null ? eerieAmbiance.volume : 0f;
     float startCalm = calmAmbiance != null ? calmAmbiance.volume : 0f;
 
-    // Target volumes: eerie -> 0, calm -> 1
     float targetEerie = 0f;
     float targetCalm = 1f;
 
