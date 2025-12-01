@@ -181,7 +181,8 @@ AudioMixerSnapshotController:
   m_FloatValues:
     53b871006edebbe46bf78e4f5796f192: 11.563751
     1f30e6127370b45458eae2e8645c6d7f: 1.7759992
-    24f034a9051faae48a3b63f14fa0e6cd: 1.1960135
+    f87702c2d79eee14a88dcd79c10e0186: -0.002441872
+    24f034a9051faae48a3b63f14fa0e6cd: 0.05686923
     8ce4f90c7da97dd43aa0a223714aace5: 123.29433
   m_TransitionOverrides: {}
 --- !u!243 &1900676645137564359
@@ -250,7 +251,9 @@ AudioMixerSnapshotController:
   m_Name: PartyAfter
   m_AudioMixer: {fileID: 24100000}
   m_SnapshotID: bfd29f56b773ca543b319e504101953a
-  m_FloatValues: {}
+  m_FloatValues:
+    53b871006edebbe46bf78e4f5796f192: 12.034826
+    f87702c2d79eee14a88dcd79c10e0186: 20
   m_TransitionOverrides: {}
 --- !u!244 &6821628019586060028
 AudioMixerEffectController:
