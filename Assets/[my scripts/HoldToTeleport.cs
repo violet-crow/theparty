@@ -21,6 +21,10 @@ public float holdDuration = 1f;
 [Tooltip("Rotate the player so their head forward matches the waypoint's forward (planar).")]
 public bool alignYawToDestination = true;
 
+[Header("Disable on teleport")]
+[Tooltip("This GameObject will be SetActive(false) when teleportation completes.")]
+public GameObject disableOnTeleport;
+
 [Tooltip("Allow only a single teleport from this object.")]
 public bool onlyOnce = false;
 
@@ -210,6 +214,7 @@ IEnumerator TeleportEndOfFrame(Camera cam, Transform root)
     if (hadCC) cc.enabled = true;
 
     hasTeleported = true;
+    if (disableOnTeleport) disableOnTeleport.SetActive(false);
 
     // Switch mixer snapshot
     ChangeMixerSnapshot();
