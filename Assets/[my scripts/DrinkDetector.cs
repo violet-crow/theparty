@@ -102,6 +102,9 @@ bool towardsPlayer = Vector3.Dot(mouthNormal, toTarget) > 0f;
 
 void TriggerDrink()
 {
+    #if OVRPLUGIN_PRESENT
+StartCoroutine(VibrateRightController(2f));
+#endif
     if (audioSource != null && drinkClip != null)
         audioSource.PlayOneShot(drinkClip, drinkVolume);
 
@@ -129,4 +132,18 @@ tiltDeg = towardsPlayer ? -tiltMag : tiltMag;
 
     debugText.text = $"Tilt: {tiltDeg:F0}°  Dist: {dist:F2}m";
 }
+
+#if OVRPLUGIN_PRESENT
+IEnumerator VibrateRightController(float seconds, float frequency = 1f, float amplitude = 1f)
+{
+OVRInput.SetControllerVibration(frequency, amplitude, OVRInput.Controller.RTouch);
+float t = 0f;
+while (t < seconds)
+{
+t += Time.unscaledDeltaTime; // real-time 2s
+yield return null;
+}
+OVRInput.SetControllerVibration(0f, 0f, OVRInput.Controller.RTouch);
+}
+#endif
 }
