@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -13,9 +12,7 @@ public static IntoxicationManager Instance { get; private set; }
 public Volume globalVolume;
 
 [Header("Progress per drink")]
-[Tooltip("Percent of total effect added per drink (0.2 = 20%).")]
 [Range(0f, 1f)] public float incrementPercentPerDrink = 0.2f;
-[Tooltip("Drink count at which blackout triggers.")]
 public int blackoutDrinkCount = 5;
 
 [Header("Max color deltas at 100% progress")]
@@ -25,20 +22,23 @@ public float colorBlendSeconds = 0.35f;
 
 [Header("Motion Blur (VR caution)")]
 public bool enableMotionBlur = true;
-[Tooltip("Motion blur intensity at 100% progress.")]
 [Range(0f, 1f)] public float maxMotionBlurIntensity = 0.5f;
-[Tooltip("Motion blur clamp at 100% progress.")]
 [Range(0f, 1f)] public float maxMotionBlurClamp = 0.25f;
 public MotionBlurQuality motionBlurQuality = MotionBlurQuality.Medium;
 
 [Header("Blackout UI")]
 public CanvasGroup blackoutCanvasGroup;
-public Button restartButton;
 public float blackoutFadeSeconds = 0.8f;
 
 [Header("Restart behavior")]
 public bool reloadSceneOnRestart = false;
 public string restartSceneName = "";
+
+[Header("Blackout controls")]
+[Tooltip("Hold any face button for this duration to restart.")]
+public float holdToRestartSeconds = 2f;
+[Tooltip("Listen for face buttons during blackout.")]
+public bool listenForFaceButtons = true;
 
 [Header("Optional control during blackout")]
 public Behaviour[] disableOnBlackout;
@@ -50,6 +50,8 @@ MotionBlur motionBlur;
 float baseSaturation = 0f, baseContrast = 0f;
 Coroutine colorRoutine;
 Coroutine blackoutRoutine;
+bool isBlackoutActive = false;
+float holdTimer = 0f;
 
 void Awake()
 {
@@ -88,13 +90,28 @@ void Start()
         blackoutCanvasGroup.interactable = false;
         blackoutCanvasGroup.blocksRaycasts = false;
     }
-    if (restartButton)
-    {
-        restartButton.onClick.RemoveAllListeners();
-        restartButton.onClick.AddListener(RestartExperience);
-    }
 
-    ApplyProgressEffectsImmediate(); // ensure baseline
+    ApplyProgressEffectsImmediate();
+}
+
+void Update()
+{
+    if (!isBlackoutActive || !listenForFaceButtons) return;
+
+    if (IsAnyFaceButtonHeld())
+    {
+        holdTimer += Time.deltaTime;
+        if (holdTimer >= holdToRestartSeconds)
+        {
+            holdTimer = 0f;
+            isBlackoutActive = false; // prevent double-trigger
+            RestartExperience();
+        }
+    }
+    else
+    {
+        holdTimer = 0f;
+    }
 }
 
 // Hook this to DrinkDetector.OnDrink
@@ -103,7 +120,6 @@ public void HandleDrink()
     if (globalVolume == null || globalVolume.profile == null) return;
 
     drinkCount++;
-
     ApplyProgressEffectsBlended();
 
     if (drinkCount >= blackoutDrinkCount)
@@ -186,6 +202,7 @@ void ApplyBlackout()
         for (int i = 0; i < disableOnBlackout.Length; i++)
             if (disableOnBlackout[i]) disableOnBlackout[i].enabled = false;
     }
+    DisableBlackoutObjects();
 
     if (blackoutRoutine != null) StopCoroutine(blackoutRoutine);
     blackoutRoutine = StartCoroutine(BlackoutSequence());
@@ -205,6 +222,8 @@ IEnumerator BlackoutSequence()
     blackoutCanvasGroup.alpha = 1f;
     blackoutCanvasGroup.interactable = true;
     blackoutCanvasGroup.blocksRaycasts = true;
+    isBlackoutActive = true;
+    holdTimer = 0f;
     blackoutRoutine = null;
 }
 
@@ -229,6 +248,9 @@ public void RestartExperience()
         blackoutCanvasGroup.blocksRaycasts = false;
     }
 
+    isBlackoutActive = false;
+    holdTimer = 0f;
+
     ApplyProgressEffectsImmediate();
 
     if (disableOnBlackout != null)
@@ -236,5 +258,51 @@ public void RestartExperience()
         for (int i = 0; i < disableOnBlackout.Length; i++)
             if (disableOnBlackout[i]) disableOnBlackout[i].enabled = true;
     }
+    RestoreBlackoutObjects();
+}
+
+bool IsAnyFaceButtonHeld()
+{
+// Quest 3: A/B (RTouch) and X/Y (LTouch)
+return OVRInput.Get(OVRInput.Button.One, OVRInput.Controller.RTouch) || // A
+OVRInput.Get(OVRInput.Button.Two, OVRInput.Controller.RTouch) || // B
+OVRInput.Get(OVRInput.Button.One, OVRInput.Controller.LTouch) || // X
+OVRInput.Get(OVRInput.Button.Two, OVRInput.Controller.LTouch);   // Y
+}
+
+
+// blackout disable
+// Field (Inspector list)
+[Header("Blackout: Objects to disable")]
+[Tooltip("GameObjects to SetActive(false) during blackout; restored on restart.")]
+public GameObject[] disableObjectsOnBlackout;
+
+// Internal state
+bool[] _blackoutObjActiveStates;
+
+// Methods
+void DisableBlackoutObjects()
+{
+if (disableObjectsOnBlackout == null) return;
+if (_blackoutObjActiveStates == null || _blackoutObjActiveStates.Length != disableObjectsOnBlackout.Length)
+    _blackoutObjActiveStates = new bool[disableObjectsOnBlackout.Length];
+
+for (int i = 0; i < disableObjectsOnBlackout.Length; i++)
+{
+    var go = disableObjectsOnBlackout[i];
+    if (!go) continue;
+    _blackoutObjActiveStates[i] = go.activeSelf; // remember prior state
+    go.SetActive(false);
+}
+}
+void RestoreBlackoutObjects()
+{
+if (disableObjectsOnBlackout == null || _blackoutObjActiveStates == null) return;
+for (int i = 0; i < disableObjectsOnBlackout.Length; i++)
+{
+    var go = disableObjectsOnBlackout[i];
+    if (!go) continue;
+    go.SetActive(_blackoutObjActiveStates[i]); // restore prior state
+}
 }
 }
