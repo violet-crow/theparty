@@ -10,43 +10,40 @@ public class IntoxicationManager : MonoBehaviour
 {
 public static IntoxicationManager Instance { get; private set; }
 [Header("URP Volume (Global)")]
-[Tooltip("Global Volume with a profile. Color Adjustments and Motion Blur will be ensured/created.")]
 public Volume globalVolume;
 
-[Header("Stage 1 - Color Adjustments")]
-[Tooltip("Target saturation delta (added to base).")]
-public float stage1SaturationDelta = 25f;
-[Tooltip("Target contrast delta (added to base).")]
-public float stage1ContrastDelta = 15f;
-[Tooltip("Seconds to blend color changes.")]
-public float colorBlendSeconds = 0.4f;
+[Header("Progress per drink")]
+[Tooltip("Percent of total effect added per drink (0.2 = 20%).")]
+[Range(0f, 1f)] public float incrementPercentPerDrink = 0.2f;
+[Tooltip("Drink count at which blackout triggers.")]
+public int blackoutDrinkCount = 5;
 
-[Header("Stage 2 - Motion Blur (VR caution)")]
-[Tooltip("Enable Motion Blur effect at Stage 2.")]
+[Header("Max color deltas at 100% progress")]
+public float maxSaturationDelta = 40f;
+public float maxContrastDelta = 25f;
+public float colorBlendSeconds = 0.35f;
+
+[Header("Motion Blur (VR caution)")]
 public bool enableMotionBlur = true;
-[Range(0f, 1f)] public float motionBlurIntensity = 0.4f;
-[Range(0f, 1f)] public float motionBlurClamp = 0.2f;
+[Tooltip("Motion blur intensity at 100% progress.")]
+[Range(0f, 1f)] public float maxMotionBlurIntensity = 0.5f;
+[Tooltip("Motion blur clamp at 100% progress.")]
+[Range(0f, 1f)] public float maxMotionBlurClamp = 0.25f;
 public MotionBlurQuality motionBlurQuality = MotionBlurQuality.Medium;
 
-[Header("Stage 3 - Blackout UI")]
-[Tooltip("CanvasGroup of blackout UI (panel+text+restart button).")]
+[Header("Blackout UI")]
 public CanvasGroup blackoutCanvasGroup;
-[Tooltip("Restart button inside blackout UI.")]
 public Button restartButton;
-[Tooltip("Seconds to fade to black before showing UI.")]
 public float blackoutFadeSeconds = 0.8f;
 
 [Header("Restart behavior")]
-[Tooltip("Reload scene on restart instead of soft reset.")]
 public bool reloadSceneOnRestart = false;
-[Tooltip("If reloading, specify a scene name (optional). Leave empty to reload active scene.")]
 public string restartSceneName = "";
 
 [Header("Optional control during blackout")]
-[Tooltip("Disable listed components on blackout (e.g., movement controllers).")]
 public Behaviour[] disableOnBlackout;
 
-// Internal state
+// Internal
 int drinkCount = 0;
 ColorAdjustments colorAdj;
 MotionBlur motionBlur;
@@ -68,98 +65,84 @@ void Start()
         return;
     }
 
-    // Ensure/lookup overrides
     if (!globalVolume.profile.TryGet(out colorAdj))
         colorAdj = globalVolume.profile.Add<ColorAdjustments>();
     if (!globalVolume.profile.TryGet(out motionBlur))
         motionBlur = globalVolume.profile.Add<MotionBlur>();
 
-    // Record baseline values
     baseSaturation = colorAdj.saturation.value;
     baseContrast = colorAdj.contrast.value;
 
-    // Make sure overrides are active/overridden
     colorAdj.active = true;
     colorAdj.saturation.overrideState = true;
     colorAdj.contrast.overrideState = true;
 
-    motionBlur.active = false; // off initially
+    motionBlur.active = false;
     motionBlur.intensity.overrideState = true;
     motionBlur.clamp.overrideState = true;
+    motionBlur.quality.value = motionBlurQuality;
 
-    // Setup blackout UI
-    if (blackoutCanvasGroup != null)
+    if (blackoutCanvasGroup)
     {
         blackoutCanvasGroup.alpha = 0f;
         blackoutCanvasGroup.interactable = false;
         blackoutCanvasGroup.blocksRaycasts = false;
     }
-    if (restartButton != null)
+    if (restartButton)
     {
         restartButton.onClick.RemoveAllListeners();
         restartButton.onClick.AddListener(RestartExperience);
     }
+
+    ApplyProgressEffectsImmediate(); // ensure baseline
 }
 
-// Call this from DrinkDetector.OnDrink (UnityEvent) or directly
+// Hook this to DrinkDetector.OnDrink
 public void HandleDrink()
 {
-    if (globalVolume == null || globalVolume.profile == null)
-        return;
+    if (globalVolume == null || globalVolume.profile == null) return;
 
     drinkCount++;
 
-    if (drinkCount == 1)
-    {
-        ApplyStage1();
-    }
-    else if (drinkCount == 2)
-    {
-        ApplyStage2();
-    }
-    else if (drinkCount >= 3)
-    {
-        ApplyStage3();
-    }
+    ApplyProgressEffectsBlended();
+
+    if (drinkCount >= blackoutDrinkCount)
+        ApplyBlackout();
 }
 
-void ApplyStage1()
+void ApplyProgressEffectsBlended()
 {
-    float targetSat = baseSaturation + stage1SaturationDelta;
-    float targetCon = baseContrast + stage1ContrastDelta;
+    float progress = Mathf.Clamp01(drinkCount * incrementPercentPerDrink);
+
+    float targetSat = baseSaturation + maxSaturationDelta * progress;
+    float targetCon = baseContrast + maxContrastDelta * progress;
     StartColorBlend(targetSat, targetCon, colorBlendSeconds);
+
+    if (enableMotionBlur && motionBlur != null)
+    {
+        motionBlur.active = progress > 0f;
+        motionBlur.intensity.value = maxMotionBlurIntensity * progress;
+        motionBlur.clamp.value = maxMotionBlurClamp * progress;
+    }
 }
 
-void ApplyStage2()
+void ApplyProgressEffectsImmediate()
 {
-    if (!enableMotionBlur || motionBlur == null) return;
+    float progress = Mathf.Clamp01(drinkCount * incrementPercentPerDrink);
 
-    motionBlur.active = true;
-    motionBlur.intensity.value = motionBlurIntensity;
-    motionBlur.clamp.value = motionBlurClamp;
-    motionBlur.quality.value = motionBlurQuality;
-}
+    colorAdj.saturation.value = baseSaturation + maxSaturationDelta * progress;
+    colorAdj.contrast.value = baseContrast + maxContrastDelta * progress;
 
-void ApplyStage3()
-{
-    if (blackoutCanvasGroup == null)
+    if (enableMotionBlur && motionBlur != null)
     {
-        Debug.LogWarning("IntoxicationManager: No blackout UI assigned; performing soft reset.");
-        RestartExperience();
-        return;
+        motionBlur.active = progress > 0f;
+        motionBlur.intensity.value = maxMotionBlurIntensity * progress;
+        motionBlur.clamp.value = maxMotionBlurClamp * progress;
     }
-
-    // Disable any listed components (input/movement) during blackout
-    if (disableOnBlackout != null)
+    else if (motionBlur != null)
     {
-        for (int i = 0; i < disableOnBlackout.Length; i++)
-        {
-            if (disableOnBlackout[i] != null) disableOnBlackout[i].enabled = false;
-        }
+        motionBlur.active = false;
     }
-
-    if (blackoutRoutine != null) StopCoroutine(blackoutRoutine);
-    blackoutRoutine = StartCoroutine(BlackoutSequence());
 }
 
 void StartColorBlend(float targetSaturation, float targetContrast, float duration)
@@ -189,9 +172,27 @@ IEnumerator ColorBlendRoutine(float targetSaturation, float targetContrast, floa
     colorRoutine = null;
 }
 
+void ApplyBlackout()
+{
+    if (blackoutCanvasGroup == null)
+    {
+        Debug.LogWarning("IntoxicationManager: No blackout UI assigned; performing soft reset.");
+        RestartExperience();
+        return;
+    }
+
+    if (disableOnBlackout != null)
+    {
+        for (int i = 0; i < disableOnBlackout.Length; i++)
+            if (disableOnBlackout[i]) disableOnBlackout[i].enabled = false;
+    }
+
+    if (blackoutRoutine != null) StopCoroutine(blackoutRoutine);
+    blackoutRoutine = StartCoroutine(BlackoutSequence());
+}
+
 IEnumerator BlackoutSequence()
 {
-    // Fade to black (UI overlay assumed to be a full-screen panel)
     float t = 0f;
     float dur = Mathf.Max(0.01f, blackoutFadeSeconds);
     while (t < 1f)
@@ -200,58 +201,40 @@ IEnumerator BlackoutSequence()
         blackoutCanvasGroup.alpha = Mathf.Clamp01(t);
         yield return null;
     }
-    blackoutCanvasGroup.alpha = 1f;
 
-    // Enable UI interaction
+    blackoutCanvasGroup.alpha = 1f;
     blackoutCanvasGroup.interactable = true;
     blackoutCanvasGroup.blocksRaycasts = true;
-
     blackoutRoutine = null;
 }
 
 public void RestartExperience()
 {
-    // Reload or soft reset
     if (reloadSceneOnRestart)
     {
-        string scene = string.IsNullOrEmpty(restartSceneName)
-            ? SceneManager.GetActiveScene().name
-            : restartSceneName;
+        string scene = string.IsNullOrEmpty(restartSceneName) ? SceneManager.GetActiveScene().name : restartSceneName;
         SceneManager.LoadScene(scene);
         return;
     }
 
-    // Soft reset effects
     drinkCount = 0;
 
     if (colorRoutine != null) { StopCoroutine(colorRoutine); colorRoutine = null; }
     if (blackoutRoutine != null) { StopCoroutine(blackoutRoutine); blackoutRoutine = null; }
 
-    if (colorAdj != null)
-    {
-        colorAdj.saturation.value = baseSaturation;
-        colorAdj.contrast.value = baseContrast;
-    }
-
-    if (motionBlur != null)
-    {
-        motionBlur.active = false;
-    }
-
-    if (blackoutCanvasGroup != null)
+    if (blackoutCanvasGroup)
     {
         blackoutCanvasGroup.alpha = 0f;
         blackoutCanvasGroup.interactable = false;
         blackoutCanvasGroup.blocksRaycasts = false;
     }
 
-    // Re-enable components
+    ApplyProgressEffectsImmediate();
+
     if (disableOnBlackout != null)
     {
         for (int i = 0; i < disableOnBlackout.Length; i++)
-        {
-            if (disableOnBlackout[i] != null) disableOnBlackout[i].enabled = true;
-        }
+            if (disableOnBlackout[i]) disableOnBlackout[i].enabled = true;
     }
 }
 }
