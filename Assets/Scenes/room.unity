@@ -3495,7 +3495,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "THE PARTY\nby violet crow for \nARTSTUDI 169\nspecial thanks to the harmonics
+  m_text: "THE PARTY\nby violet crow for \nARTSTUDI 169\nspecial thanks to\nthe harmonics
     <3"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 09feefd91aee1364287afbac6e5b8ccd, type: 2}
@@ -7891,15 +7891,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8527570331147687402, guid: 4415c3d5fc247154195e8911a5d86830, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 7.571
+      value: 7.609
       objectReference: {fileID: 0}
     - target: {fileID: 8527570331147687402, guid: 4415c3d5fc247154195e8911a5d86830, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -4.389
+      value: -4.567
       objectReference: {fileID: 0}
     - target: {fileID: 8527570331147687402, guid: 4415c3d5fc247154195e8911a5d86830, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -7.96
+      value: -8.061
       objectReference: {fileID: 0}
     - target: {fileID: 8527570331147687402, guid: 4415c3d5fc247154195e8911a5d86830, type: 3}
       propertyPath: m_LocalRotation.w
@@ -7935,7 +7935,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9012781087042539344, guid: 4415c3d5fc247154195e8911a5d86830, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
